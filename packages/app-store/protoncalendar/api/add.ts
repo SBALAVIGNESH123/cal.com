@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!url) return res.status(400).json({ message: "URL is required" });
 
-        // Strict Domain Validation (Prevent SSRF)
+        // Only allow Proton domains
         let hostname;
         try {
             hostname = new URL(url).hostname;
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         try {
-            // Verify connection before saving
+            // Quick-check the feed before saving
             const service = BuildCalendarService({
                 id: 0,
                 ...data,

@@ -1,13 +1,8 @@
 # Proton Calendar
 
-Sync your Proton Calendar with Cal.com using a secure ICS feed.
+Connect your Proton Calendar to Cal.com via an ICS feed URL. Cal.com will use it to check your availability (read-only).
 
-## Features
-- **Read-Only Sync**: Cal.com checks your Proton Calendar for busy slots.
-- **Privacy First**: Uses Proton's secure ICS feed (no password sharing).
-- **Zero Knowledge**: Credentials are encrypted at rest.
-
-## How to use
-1. Go to Proton Calendar Settings.
+## Setup
+1. In Proton Calendar, go to Settings → Calendars.
 2. Create a "Link to calendar" (ICS feed).
-3. Paste the URL here.
+3. Copy the URL and paste it into the Cal.com setup page.

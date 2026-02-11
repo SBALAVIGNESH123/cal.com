@@ -60,13 +60,11 @@ class ProtonCalendarService implements Calendar {
       if (event.isRecurring()) {
         const iterator = event.iterator();
         let next;
-        // Iterate through occurrences
+
         while ((next = iterator.next())) {
           const start = dayjs(next.toJSDate());
 
-          // Optimization: If the occurrence starts after our range, stop iterating (assuming sorted/monotonic)
-          // However, RRULEs can be complex, but generally chronological. 
-          // We break if we assume it goes to infinity.
+          // Past our range, stop.
           if (start.isAfter(rangeEnd)) break;
 
           const duration = event.duration;
@@ -121,7 +119,7 @@ class ProtonCalendarService implements Calendar {
       return vevents.map(v => new ICAL.Event(v));
     } catch (e) {
       if (e instanceof Error) {
-        // Redact the sensitive URL from the error message to avoid logging tokens
+
         const safeMessage = e.message.replaceAll(this.url, "[REDACTED_URL]");
         logger.error("Proton ICS Parse Error:", safeMessage);
       } else {
