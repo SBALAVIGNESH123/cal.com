@@ -120,10 +120,9 @@ class ProtonCalendarService implements Calendar {
       const vevents = vcalendar.getAllSubcomponents("vevent");
       return vevents.map(v => new ICAL.Event(v));
     } catch (e) {
-    } catch (e) {
       if (e instanceof Error) {
         // Redact the sensitive URL from the error message to avoid logging tokens
-        const safeMessage = e.message.replace(this.url, "[REDACTED_URL]");
+        const safeMessage = e.message.replaceAll(this.url, "[REDACTED_URL]");
         logger.error("Proton ICS Parse Error:", safeMessage);
       } else {
         logger.error("Proton ICS Parse Error:", e);
