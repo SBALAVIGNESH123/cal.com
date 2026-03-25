@@ -10,7 +10,6 @@ import BuildCalendarService from "../lib/CalendarService";
 
 const log = logger.getSubLogger({ prefix: ["proton-calendar/add"] });
 
-/** Returns an error message if the URL is not a valid Proton ICS feed, or null if valid. */
 function validateProtonUrl(url: string): string | null {
     let parsedUrl: URL;
     try {

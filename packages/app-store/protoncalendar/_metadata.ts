@@ -1,4 +1,5 @@
 import type { AppMeta } from "@calcom/types/App";
+
 import _package from "./package.json";
 
 export const metadata = {
@@ -17,6 +18,7 @@ export const metadata = {
     email: "support@proton.me",
     dirName: "protoncalendar",
     isOAuth: false,
+    isTemplate: false,
 } as AppMeta;
 
 export default metadata;

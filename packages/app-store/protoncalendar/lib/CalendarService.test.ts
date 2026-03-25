@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Mocks — use vi.hoisted to avoid Vitest's auto-hoisting reference errors
-// ---------------------------------------------------------------------------
-
 const { hoistedDayjs } = vi.hoisted(() => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const djs = require("dayjs");
@@ -41,16 +37,11 @@ vi.mock("@calcom/lib/logger", () => ({
 
 import BuildCalendarService from "./CalendarService";
 
-// ---------------------------------------------------------------------------
-// Test setup
-// ---------------------------------------------------------------------------
-
 vi.stubEnv("CALENDSO_ENCRYPTION_KEY", "test-key-123");
 
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
-/** Factory for a mock credential pointing to a Proton ICS URL */
 const makeCredential = (url = "https://proton.me/calendar/ics/abc123") => ({
     id: 1,
     appId: "proton-calendar",
@@ -64,11 +55,9 @@ const makeCredential = (url = "https://proton.me/calendar/ics/abc123") => ({
     delegationCredentialId: null,
 });
 
-/** Helper to create a minimal valid ICS string */
 const makeICS = (vevents: string) =>
     `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Proton//Calendar//EN\n${vevents}END:VCALENDAR`;
 
-/** Mock a successful fetch returning the given ICS text */
 const mockFetchSuccess = (icsText: string) => {
     fetchMock.mockResolvedValueOnce({
         ok: true,
@@ -214,7 +203,6 @@ END:VEVENT
                 dateTo: "2025-05-02T00:00:00Z",
             } as any);
 
-            // Only the non-cancelled event should block availability
             expect(busy).toHaveLength(1);
             expect(busy[0].start).toContain("2025-05-01T14:00:00");
         });
@@ -243,7 +231,7 @@ END:VEVENT
 
     describe("Proton-specific: cancelled recurring occurrences", () => {
         it("should skip individually-cancelled occurrences of recurring events", async () => {
-            // Daily standup May 1-3, but May 2 occurrence cancelled via RECURRENCE-ID
+
             const ics = makeICS(`BEGIN:VEVENT
 UID:standup-weekly
 DTSTART:20250501T090000Z
@@ -268,7 +256,6 @@ END:VEVENT
                 dateTo: "2025-05-04T00:00:00Z",
             } as any);
 
-            // May 1 ✅, May 2 ❌ (cancelled), May 3 ✅
             expect(busy).toHaveLength(2);
             expect(busy[0].start).toContain("2025-05-01T09:00:00");
             expect(busy[1].start).toContain("2025-05-03T09:00:00");
@@ -287,7 +274,6 @@ END:VEVENT
             expect(calendars[0]).toEqual(
                 expect.objectContaining({
                     integration: "proton_calendar",
-                    name: "Proton Calendar", // fallback when x-wr-calname is missing
                     primary: true,
                     readOnly: true,
                 })
@@ -339,7 +325,6 @@ END:VEVENT
                 dateTo: "2025-05-02T00:00:00Z",
             } as any);
 
-            // Should degrade gracefully — not crash the availability engine
             expect(busy).toEqual([]);
         });
 
@@ -390,18 +375,13 @@ END:VEVENT
             fetchMock.mockRejectedValueOnce(new Error(`Failed to connect to ${secretUrl}`));
 
             const service = BuildCalendarService(makeCredential(secretUrl));
-            // @ts-expect-error — accessing private logger for assertion
-            const logError = service["log"]?.error ?? vi.fn();
 
-            await service.getAvailability({
+            const busy = await service.getAvailability({
                 dateFrom: "2025-05-01T00:00:00Z",
                 dateTo: "2025-05-02T00:00:00Z",
             } as any);
 
-            // The availability result should be empty (graceful degradation)
-            // The URL should have been redacted before logging — verified by the
-            // replaceAll(this.url, "[REDACTED_URL]") logic in fetchAndParseICSRaw
-            expect(true).toBe(true); // URL redaction is enforced at the source level
+            expect(busy).toEqual([]);
         });
     });
 
@@ -417,7 +397,6 @@ END:VEVENT
                 dateTo: "2025-05-02T00:00:00Z",
             } as any);
 
-            // All-day events should block the entire day
             expect(busy).toHaveLength(1);
         });
     });

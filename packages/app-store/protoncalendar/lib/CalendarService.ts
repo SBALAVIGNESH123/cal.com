@@ -21,18 +21,9 @@ const log = logger.getSubLogger({ prefix: ["ProtonCalendarService"] });
 
 const CALENDSO_ENCRYPTION_KEY = process.env.CALENDSO_ENCRYPTION_KEY || "";
 
-/** Guards against infinite or extremely long RRULE expansions. */
 const MAX_RECURRENCE_ITERATIONS = 365;
-
-/** Network timeout for fetching the ICS feed (ms). */
 const FETCH_TIMEOUT_MS = 15_000;
 
-/**
- * Proton Calendar integration — read-only ICS feed.
- *
- * Proton Calendar uses end-to-end encryption; no OAuth or CalDAV API is
- * available. Integration is via the ICS share link in Proton Calendar settings.
- */
 class ProtonCalendarService implements Calendar {
   private url: string = "";
   protected integrationName = "proton_calendar";
@@ -47,7 +38,6 @@ class ProtonCalendarService implements Calendar {
   }
 
   createEvent(_event: CalendarEvent, _credentialId: number): Promise<NewCalendarEventType> {
-    log.warn("createEvent called on Proton Calendar (read-only)");
     return Promise.resolve({
       uid: _event.uid || "",
       type: this.integrationName,
@@ -61,7 +51,6 @@ class ProtonCalendarService implements Calendar {
   }
 
   deleteEvent(_uid: string, _event: CalendarEvent, _externalCalendarId?: string): Promise<unknown> {
-    log.warn("deleteEvent called on Proton Calendar (read-only)");
     return Promise.resolve();
   }
 
@@ -70,7 +59,6 @@ class ProtonCalendarService implements Calendar {
     _event: CalendarEvent,
     _externalCalendarId?: string
   ): Promise<NewCalendarEventType | NewCalendarEventType[]> {
-    log.warn("updateEvent called on Proton Calendar (read-only)");
     return Promise.resolve({
       uid: _event.uid || "",
       type: this.integrationName,
@@ -95,7 +83,6 @@ class ProtonCalendarService implements Calendar {
     for (const event of events) {
       const status = event.component.getFirstPropertyValue("status") as string | null;
       if (status && status.toUpperCase() === "CANCELLED") {
-        log.debug("Skipping CANCELLED event: %s", event.uid);
         continue;
       }
 
@@ -103,7 +90,6 @@ class ProtonCalendarService implements Calendar {
         const recurrenceType = event.getRecurrenceTypes();
 
         if (["HOURLY", "SECONDLY", "MINUTELY"].includes(recurrenceType)) {
-          log.warn("Skipping unsupported recurrence type: %s", recurrenceType);
           continue;
         }
 
@@ -124,7 +110,6 @@ class ProtonCalendarService implements Calendar {
 
           const occurrenceKey = `${event.uid}:${next.toISOString()}`;
           if (cancelledOccurrences.has(occurrenceKey)) {
-            log.debug("Skipping cancelled recurring occurrence: %s", occurrenceKey);
             continue;
           }
 
@@ -139,9 +124,6 @@ class ProtonCalendarService implements Calendar {
           }
         }
 
-        if (remaining <= 0) {
-          log.warn("Hit max iterations for recurring event %s", event.uid);
-        }
       } else {
         const start = dayjs(event.startDate.toJSDate());
         const end = dayjs(event.endDate.toJSDate());
@@ -165,7 +147,6 @@ class ProtonCalendarService implements Calendar {
       throw new Error("Could not reach Proton Calendar ICS feed");
     }
 
-    // Proton feeds often omit x-wr-calname; fall back to a sensible default.
     const calName: string =
       vcalendar.getFirstPropertyValue("x-wr-calname") || "Proton Calendar";
 
@@ -244,7 +225,7 @@ class ProtonCalendarService implements Calendar {
           const rid = recurrenceId.getFirstValue() as ICAL.Time;
           const key = `${event.uid}:${rid.toISOString()}`;
           cancelledOccurrences.add(key);
-          log.debug("Tracked cancelled occurrence: %s at %s", event.uid, rid.toISOString());
+
           continue;
         }
 
